@@ -177,6 +177,25 @@ package_tier = st.sidebar.radio(
     ],
     index=0
 )
+# New Water Security Interdependency Impact Summary
+    if water_tier == "Standard Municipal Feed (Grid Dependent)":
+        st.error(
+            "💧 **Water-Energy Cascade Disruption:** High-voltage grid instability forces a "
+            "shutoff at municipal pumping stations. Without on-site Ultra-Pure Water (UPW) "
+            "reclamation, wafer production hits an absolute halt due to filtration failure."
+        )
+    elif water_tier == "On-Site Ultra-Pure Water (UPW) Reclamation":
+        st.warning(
+            "🔄 **Recycling Buffer Active:** Closed-loop recycling nodes at the fab level mitigate "
+            "the initial municipal drop. The system maintains internal water circulation, buying "
+            "crucial operational days independent of the civilian grid."
+        )
+    else:
+        st.success(
+            "🌊 **Complete Infrastructure Decoupling:** Hardened coastal desalination units paired "
+            "with dedicated energy micro-grids completely insulate chip manufacturing from external "
+            "infrastructure attrition."
+        )
 # Insert this right under where you define package_tier = st.sidebar.radio(...)
 
 # Dynamic White Paper Context Bridge
