@@ -177,7 +177,40 @@ package_tier = st.sidebar.radio(
     ],
     index=0
 )
+# Insert this right under where you define package_tier = st.sidebar.radio(...)
 
+# Dynamic White Paper Context Bridge
+with st.sidebar.expander("🔍 View Tier Blueprint Details"):
+    if package_tier == "Status Quo (No Intervention)":
+        st.markdown("""
+        **Operational Reality:**
+        * **Helium:** Just-In-Time (JIT) reliance; no strategic buffers.
+        * **Specialty Gases:** 0-day defensive runway.
+        * **Energy:** High vulnerability to MOEA rationing and immediate grid fracture.
+        * **Outcome:** Deterministic logistics failure within standard baseline window.
+        """)
+    elif package_tier == "Moderate Investment Package":
+        st.markdown("""
+        **Infrastructure Requirements:**
+        * Establish a baseline **5-day Helium buffering** reserve.
+        * Expand **Specialty Precursor Gas** strategic storage to cover an additional +10 to 14 days.
+        * **Focus:** Designed to absorb minor localized maritime shocks, but vulnerable to a sustained blockade.
+        """)
+    elif package_tier == "Advanced Resilience Package":
+        st.markdown("""
+        **Strategic Infrastructure Blueprint:**
+        * Implement **Helium Recycling Systems** alongside local buffers (+4 to 6 days).
+        * Construct the **Subsea Strategic Molecule Pipeline (SSMP)** to bypass physical terrestrial logistics chokepoints (+15 to 20 days).
+        * Physical hardening of the **Zhunan Air Separation Unit (ASU)** energy node (+7 days).
+        """)
+    elif package_tier == "Full Strategic Resilience Package":
+        st.markdown("""
+        **Deterrence Level Infrastructure:**
+        * Construct hardened, decentralized **60-day strategic Helium reserve** facilities.
+        * Scale domestic synthesis of **Neon and rare etching gases** to bypass import reliance (+20 days).
+        * Full integration of **hardened energy micro-grids / SMR nodes** (+30+ days).
+        * Massive **LNG storage expansion** to break the standard physical limits.
+        """)
 # Initialize variables based on report metrics
 helium_boost = 0
 gas_boost = 0
