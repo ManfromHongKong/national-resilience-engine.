@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
-
+water_tier = "Standard Municipal Feed (Grid Dependent)"
 # 1. Page Configuration for Web App Layout
 st.set_page_config(page_title="Drake Institute: National Resilience Engine", layout="wide")
 
