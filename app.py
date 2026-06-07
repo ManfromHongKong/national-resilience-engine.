@@ -166,7 +166,16 @@ st.markdown("---")
 # ---------------------------------------------------------
 st.sidebar.header("🕹️ Core Control Panel")
 st.sidebar.markdown("Select a **Stacked Intervention Package** to evaluate its impact on Taiwan's survival window and the global chip supply:")
-
+# --- CHIP-FAB WATER SECURITY LEVER ---
+water_tier = st.sidebar.selectbox(
+    "💧 Chip-Fabs Water Security Posture:",
+    options=[
+        "Standard Municipal Feed (Grid Dependent)",
+        "On-Site Ultra-Pure Water (UPW) Reclamation",
+        "Hardened Desalination + Local Power Micro-Grid"
+    ],
+    index=0
+)
 package_tier = st.sidebar.radio(
     "Stacked Investment Packages:",
     options=[
