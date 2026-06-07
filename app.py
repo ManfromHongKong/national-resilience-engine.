@@ -177,6 +177,16 @@ package_tier = st.sidebar.radio(
     ],
     index=0
 )
+# Define the water tier variable for the app
+water_tier = st.sidebar.selectbox(
+    "💧 Chip-Fabs Water Security Posture:",
+    options=[
+        "Standard Municipal Feed (Grid Dependent)",
+        "On-Site Ultra-Pure Water (UPW) Reclamation",
+        "Hardened Desalination + Local Power Micro-Grid"
+    ],
+    index=0
+)
 # New Water Security Interdependency Impact Summary
     if water_tier == "Standard Municipal Feed (Grid Dependent)":
         st.error(
