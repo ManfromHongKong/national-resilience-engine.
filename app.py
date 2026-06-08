@@ -1,4 +1,3 @@
-
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -32,14 +31,14 @@ st.markdown("---")
 st.sidebar.header("🕹️ Macro Stress & Intervention Radars")
 st.sidebar.markdown("Adjust risk baselines and layered defensive investments to run the live cascade models.")
 
-# Vector A: Threat Profiles
+# Vector A: Threat Profiles (Explicit Maritime Logistics Choke Points)
 st.sidebar.subheader("⚠️ Disruption Threat Vector")
 scenario_type = st.sidebar.selectbox(
     "Select Red Team Threat Vector:",
     options=[
-        "Scenario A: Full Maritime Blockade (Kaohsiung Focus)", 
-        "Scenario B: Gray-Zone Harassment & Interdiction", 
-        "Scenario C: Critical Infrastructure LNG Shock Event"
+        "Scenario A: CCG Blockade (Kaohsiung Interdiction & Bashi Strait Escalation)", 
+        "Scenario B: CCG Grey-Zone Interdiction (Qatar & Australia Transit Disruptions via Miyako Channel)", 
+        "Scenario C: Critical Infrastructure LNG Node Physical Shock Event"
     ]
 )
 
@@ -112,21 +111,40 @@ if water_tier == "On-Site Ultra-Pure Water (UPW) Reclamation":
 elif water_tier == "Hardened Desalination + Local Power Micro-Grid":
     water_boost = 12
 
-# Anchor foundational threat timelines from the strategic report
-if "Scenario A" in scenario_type:
-    base_mean = 12      # 10-14 day baseline failure
-    base_std = 2
-elif "Scenario B" in scenario_type:
-    base_mean = 31      # 28-35 day baseline failure
-    base_std = 4
-else:
-    base_mean = 6.5     # 5-8 day sudden grid fracture limit
-    base_std = 1
+# Shipping Economics Multipliers based on selected threat vectors
+clarksons_surge = "+0%"
+baltic_premium = "Baseline"
+fleet_flight_status = "Normal Operations"
+shipping_friction_deduction = 0
 
-# Execute Monte Carlo Modeling
+if "Scenario A" in scenario_type:
+    base_mean = 12      
+    base_std = 2
+    lng_cutoff_day = 11  
+    clarksons_surge = "+450% Spike"
+    baltic_premium = "War-Risk Surcharge Active (Bashi Strait Gridlock)"
+    fleet_flight_status = "Mass Retreat: Vessels holding in Subic Bay / Offloading in Japan"
+    shipping_friction_deduction = 3  # Strategic shipping flight drops runway days
+elif "Scenario B" in scenario_type:
+    base_mean = 31      
+    base_std = 4
+    lng_cutoff_day = 25  
+    clarksons_surge = "+180% Increase"
+    baltic_premium = "Elevated Risk Index (Miyako Channel Diverting)"
+    fleet_flight_status = "Active Re-Chartering: Hulls fleeing cross-strait lanes for safer routes"
+    shipping_friction_deduction = 5
+else:
+    base_mean = 6.5     
+    base_std = 1
+    lng_cutoff_day = 5   
+    clarksons_surge = "+40% Friction"
+    baltic_premium = "Localized Shock Adjustments"
+    fleet_flight_status = "Insurance Warnings Issued for Taiwan Territorial Waters"
+
+# Execute Monte Carlo Modeling with dynamic Shipping Friction Adjustment
 runs = 10000
 timeline_days = 90
-total_resilience_boost = helium_boost + gas_boost + grid_boost + lng_boost + water_boost
+total_resilience_boost = (helium_boost + gas_boost + grid_boost + lng_boost + water_boost) - shipping_friction_deduction
 
 np.random.seed(42)
 simulated_baseline = np.random.normal(base_mean, base_std, runs)
@@ -136,7 +154,7 @@ timeline = np.arange(0, timeline_days)
 prob_baseline = np.array([(simulated_baseline > t).mean() for t in timeline])
 prob_protected = np.array([(simulated_protected > t).mean() for t in timeline])
 
-mean_survival_days = int(np.mean(simulated_protected))
+mean_survival_days = max(int(np.mean(simulated_protected)), 1)
 
 # Establish State Transition Flags based on quantified survival
 if mean_survival_days < 20:
@@ -160,38 +178,91 @@ with tab1:
         st.metric(
             label="Systemic Survival Floor (Days of Autarky)", 
             value=f"{mean_survival_days} Days", 
-            delta=f"+{total_resilience_boost} Days Defensively Extended" if total_resilience_boost > 0 else "Baseline Friction"
+            delta=f"+{total_resilience_boost} Days Net Variance" if total_resilience_boost > 0 else "Baseline Attrition Friction"
         )
     with col2:
         st.metric(label="National Sovereignty Stability Status", value=status_color)
     with col3:
         st.metric(label="Model CAPEX Requirements", value=capex_tier)
 
+    # RE-INTEGRATED MARITIME CHARTER MARKET TICKER PANEL
+    st.markdown("### 🚢 Shipbroker & Maritime Freight Risk Ticker")
+    tick1, tick2, tick3 = st.columns(3)
+    with tick1:
+        st.info(f"**Clarksons Spot Assessment:** {clarksons_surge}")
+    with tick2:
+        st.info(f"**Baltic Exchange Status:** {baltic_premium}")
+    with tick3:
+        st.warning(f"**Shipowner Disposition:** {fleet_flight_status}")
+
     st.markdown("---")
-    st.subheader("Probability-Weighted Infrastructure Survival Curve")
-    st.markdown("Investor Note: This curve represents the decay curve of advanced production viability under compounding cross-sector friction.")
-
-    plt.style.use('dark_background') 
-    fig, ax = plt.subplots(figsize=(10, 4))
-    ax.plot(timeline, prob_baseline * 100, label="Status Quo Profile (Unprotected)", color="#d9534f", linestyle="--", linewidth=2)
-    ax.plot(timeline, prob_protected * 100, label=f"Simulated Defense Curve ({package_tier})", color="#0275d8", linewidth=3)
-
-    ax.set_facecolor("#121212")
-    fig.patch.set_facecolor("#121212")
-    ax.spines['bottom'].set_color('#cccccc')
-    ax.spines['top'].set_color('#333333')
-    ax.spines['right'].set_color('#333333')
-    ax.spines['left'].set_color('#cccccc')
-    ax.xaxis.label.set_color('#cccccc')
-    ax.yaxis.label.set_color('#cccccc')
     
-    ax.set_xlabel("Days Elapsed Under Stress Conditions")
-    ax.set_ylabel("Probability of Uninterrupted Output (%)")
-    ax.set_xlim(0, timeline_days)
-    ax.set_ylim(0, 105)
-    ax.grid(True, linestyle=":", alpha=0.3, color="#555555")
-    ax.legend(facecolor="#222222", edgecolor="#444444", labelcolor="#cccccc")
-    st.pyplot(fig)
+    # Dual Visualization Layout
+    viz_col1, viz_col2 = st.columns(2)
+    
+    with viz_col1:
+        st.markdown("### Probability-Weighted Infrastructure Survival Curve")
+        st.caption("Investor Note: This curve tracks the decay curve of advanced production viability under compounding cross-sector friction.")
+        
+        plt.style.use('dark_background') 
+        fig1, ax1 = plt.subplots(figsize=(6, 3.5))
+        ax1.plot(timeline, prob_baseline * 100, label="Status Quo Profile (Unprotected)", color="#d9534f", linestyle="--", linewidth=2)
+        ax1.plot(timeline, prob_protected * 100, label="Simulated Defense Curve", color="#0275d8", linewidth=3)
+
+        ax1.set_facecolor("#121212")
+        fig1.patch.set_facecolor("#121212")
+        ax1.spines['bottom'].set_color('#cccccc')
+        ax1.spines['top'].set_color('#333333')
+        ax1.spines['right'].set_color('#333333')
+        ax1.spines['left'].set_color('#cccccc')
+        ax1.xaxis.label.set_color('#cccccc')
+        ax1.yaxis.label.set_color('#cccccc')
+        
+        ax1.set_xlabel("Days Elapsed Under Stress Conditions")
+        ax1.set_ylabel("Probability of Uninterrupted Output (%)")
+        ax1.set_xlim(0, timeline_days)
+        ax1.set_ylim(0, 105)
+        ax1.grid(True, linestyle=":", alpha=0.3, color="#555555")
+        ax1.legend(facecolor="#222222", edgecolor="#444444", labelcolor="#cccccc", fontsize='small')
+        st.pyplot(fig1)
+
+    with viz_col2:
+        st.markdown("### LNG Shipping Cut-Off & Inventory Decay Tracker")
+        st.caption("Investor Note: This model illustrates the physical depletion rate of domestic LNG strategic storage stocks vs. port backlogs.")
+        
+        # Calculate dynamic inventory decay based on interventions and shipping risk factors
+        extended_lng_buffer = max(lng_cutoff_day + lng_boost - shipping_friction_deduction, 1)
+        lng_inventory = []
+        for t in timeline:
+            if t < extended_lng_buffer:
+                remaining = 100 * (1.0 - (t / extended_lng_buffer))
+                lng_inventory.append(max(remaining, 0))
+            else:
+                lng_inventory.append(0)
+                
+        fig2, ax2 = plt.subplots(figsize=(6, 3.5))
+        ax2.fill_between(timeline, lng_inventory, color="#f0ad4e", alpha=0.2, label="Sovereign Inventory Volume")
+        ax2.plot(timeline, lng_inventory, color="#f0ad4e", linewidth=2.5)
+        ax2.axvline(x=lng_cutoff_day, color="#d9534f", linestyle=":", label=f"Baseline Exhaustion (Day {lng_cutoff_day})", linewidth=2)
+        if lng_boost > 0:
+            ax2.axvline(x=extended_lng_buffer, color="#5cb85c", linestyle="-.", label=f"Adjusted Run (Day {int(extended_lng_buffer)})", linewidth=2)
+
+        ax2.set_facecolor("#121212")
+        fig2.patch.set_facecolor("#121212")
+        ax2.spines['bottom'].set_color('#cccccc')
+        ax2.spines['top'].set_color('#333333')
+        ax2.spines['right'].set_color('#333333')
+        ax2.spines['left'].set_color('#cccccc')
+        ax2.xaxis.label.set_color('#cccccc')
+        ax2.yaxis.label.set_color('#cccccc')
+        
+        ax2.set_xlabel("Days Elapsed Post Shipping Cut-Off")
+        ax2.set_ylabel("Available Grid Generation Capacity (%)")
+        ax2.set_xlim(0, 45)
+        ax2.set_ylim(0, 105)
+        ax2.grid(True, linestyle=":", alpha=0.3, color="#555555")
+        ax2.legend(facecolor="#222222", edgecolor="#444444", labelcolor="#cccccc", fontsize='small')
+        st.pyplot(fig2)
 
     st.markdown("---")
     st.markdown("### 🏬 Cross-Sector Cascade Matrix & Global Impact")
@@ -231,7 +302,8 @@ with tab1:
             "Module 3: Precursor Molecule Gas Buffering": f"+{gas_boost} Days Operational Runway",
             "Module 3: Grid Hardening & ASU Prioritization": f"+{grid_boost} Power Isolation Window",
             "Module 3: LNG Sovereign Storage Multiplier": f"+{lng_boost} Core System Buffer Extension",
-            "Module 4: Ultra-Pure Water (UPW) Continuity Vector": f"+{water_boost} Closed-Loop Buffering Days"
+            "Module 4: Ultra-Pure Water (UPW) Continuity Vector": f"+{water_boost} Closed-Loop Buffering Days",
+            "Maritime Hull Attrition Friction Penalty": f"-{shipping_friction_deduction} Days (Owner Flight Accounted)"
         })
 
 # --- TAB 2: SYSTEM SCORECARDS & CHRONOLOGICAL CASCADES ---
