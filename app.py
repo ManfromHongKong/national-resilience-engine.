@@ -351,4 +351,4 @@ with tab4:
 st.markdown("---")
 st.caption("Strategic Decision Engine Layer • Integrated Systemic Attrition Model (2026) • Drake Institute of Geostrategic Intelligence.")
 
-```
+
