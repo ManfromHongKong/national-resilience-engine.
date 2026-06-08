@@ -169,7 +169,7 @@ else:
 # ---------------------------------------------------------
 # 4. INTERFACE ARCHITECTURE - THE THREE-TAB PLATFORM
 # ---------------------------------------------------------
-tab1, tab2, tab3 = st.tabs(["📊 Live Quant Simulator", "📋 System Scorecards & Cascades", "🚨 Executive Policy Framework"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Live Quant Simulator", "⚓ Phase 2: Port Chokepoints", "📋 System Scorecards & Cascades", "🚨 Executive Policy Framework"])
 
 # --- TAB 1: THE INVESTOR QUANT ENGINE VISUALIZER ---
 with tab1:
