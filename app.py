@@ -1,12 +1,3 @@
-You are completely right. By consolidating the maritime layers, we inadvertently dropped the exact terrestrial protective variables that anchor the "Silicon Shield" thesis—specifically the hardening parameters for the **Zhunan science park facilities** and the **underwater infrastructure resilience nodes** (such as backup coastal intake pipelines and secure subsea data/power connections).
-
-If we don't include those, the model can't calculate how structural engineering actively pushes back against the maritime attrition penalty.
-
-Let's fix this permanently. We will build these terrestrial variables directly into **Module 4** so that they actively counter the commercial vessel flight penalty and the CCG interdiction drag.
-
-### 📥 The Fully Restored, Unabridged `app.py` Script
-
-**Delete your existing GitHub code completely and replace it with this version.** This version officially restores the Zhunan facility hardening sliders, the underwater infrastructure toggles, and weaves them directly into the Monte Carlo core math so your silicon shield analysis is fully armed.
 
 ```python
 import streamlit as st
