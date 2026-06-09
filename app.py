@@ -30,8 +30,6 @@ def calculate_multipliers(temporal_stage, active_switches):
     
     return emp_boost, ubo_delay, academic_shield, defense_boost, temporal_decay_multiplier
 # ... (Imports and Initialization) ...
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server
 
 # ADD THIS: The Master Layout
 app.layout = dbc.Container([
