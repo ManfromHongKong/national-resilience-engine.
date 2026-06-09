@@ -29,7 +29,31 @@ def calculate_multipliers(temporal_stage, active_switches):
     temporal_decay_multiplier = 1.0 if temporal_stage == 0 else 1.5
     
     return emp_boost, ubo_delay, academic_shield, defense_boost, temporal_decay_multiplier
+# ... (Imports and Initialization) ...
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
 
+# ADD THIS: The Master Layout
+app.layout = dbc.Container([
+    html.H1("National Resilience Engine", className="text-white my-4"),
+    
+    # 1. The Tabs
+    dcc.Tabs(id="core-module-tabs", value='tab-1', children=[
+        dcc.Tab(label='Simulation Engine', value='tab-1'),
+        dcc.Tab(label='Policy Settings', value='tab-2'),
+    ]),
+    
+    # 2. The area where your callbacks will put the content
+    html.Div(id='tabs-content-example', className="mt-4"),
+    
+    # 3. Add your grid container here so it exists on the page
+    html.Div(id="restricted-grid-container"),
+    
+    # 4. Hidden store for state (if you use it)
+    dcc.Store(id="global-dummy-state")
+], fluid=True, style={"backgroundColor": "#0f1219", "minHeight": "100vh"})
+
+# ... (Now all your functions and callbacks follow) ...
 
 # Central Unified Callback to run the simulation engines for all 4 tabs simultaneously
 @app.callback(
