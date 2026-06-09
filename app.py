@@ -1,3 +1,18 @@
+import dash
+import dash_bootstrap_components as dbc
+from dash import Input, Output, State, html, dcc
+import plotly.graph_objects as go
+
+# --- INITIALIZATION ---
+# This 'app' variable is what your callbacks need
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+# This 'server' variable is what Gunicorn (on Render) needs to start the app
+server = app.server
+
+# ... now your existing helper functions and code follow below ...
+
+
 # --- STEP 3: MASTER MATH ENGINES, REPOSITORY POPULATION, & CALLBACKS ---
 
 # Helper function to compute the resilience scaling multiplier based on the temporal engine and switches
