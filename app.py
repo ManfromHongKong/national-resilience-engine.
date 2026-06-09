@@ -1,23 +1,41 @@
-# Triggering redeploy
 import dash
 import dash_bootstrap_components as dbc
 from dash import Input, Output, State, html, dcc, ALL
 import plotly.graph_objects as go
+
+# --- INITIALIZATION ---
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
-# --- INITIALIZATION ---
-# This 'app' variable is what your callbacks need
 
+# --- GLOBAL CONSTANTS (Define these so your code doesn't crash) ---
+ACCENT_SUCCESS = "#28a745"
+ACCENT_WARN = "#ffc107"
+ACCENT_FAIL = "#dc3545"
+ACCENT_INFO = "#17a2b8"
+TEXT_MUTED = "#6c757d"
+INNER_BG = "#1e222b"
+BORDER_COLOR = "#343a40"
 
-# ... now your existing helper functions and code follow below ...
-
-
-# --- STEP 3: MASTER MATH ENGINES, REPOSITORY POPULATION, & CALLBACKS ---
-
-# Helper function to compute the resilience scaling multiplier based on the temporal engine and switches
-def calculate_multipliers(temporal_stage, active_switches):
-    # 2025-2035 Runway allows a high mitigation impact (+25%), 2035-2050 Closure limits it (+5%)
-    switch_efficiency = 0.25 if temporal_stage == 0 else 0.05
+# --- MASTER LAYOUT ---
+app.layout = dbc.Container([
+    html.H1("National Resilience Engine", className="text-white my-4"),
+    
+    dcc.Tabs(id="core-module-tabs", value='tab-1', children=[
+        dcc.Tab(label='Simulation Engine', value='tab-1'),
+        dcc.Tab(label='Policy Settings', value='tab-2'),
+    ]),
+    
+    html.Div(id='tabs-content-example', className="mt-4"),
+    html.Div(id="restricted-grid-container"),
+    dcc.Store(id="global-dummy-state"),
+    
+    # MODAL FOR RESTRICTED ACCESS
+    dbc.Modal([
+        dbc.ModalHeader(dbc.ModalTitle("Restricted Access")),
+        dbc.ModalBody(id="premium-modal-content"),
+        dbc.ModalFooter(dbc.Button("Close", id="close-premium-modal-btn", className="ms-auto"))
+    ], id="premium-licensing-modal", is_open=False)
+], fluid=True, style={"backgroundColor": "#0f1219", "minHeight": "100vh"})
     
     # Calculate dampener modifiers based on active policy switches
     emp_boost = switch_efficiency if "emp" in active_switches else 0.0
