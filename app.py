@@ -1,354 +1,336 @@
-import streamlit as st
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+# --- STEP 3: MASTER MATH ENGINES, REPOSITORY POPULATION, & CALLBACKS ---
 
-# ---------------------------------------------------------
-# 1. INITIAL SYSTEM SETUP & DESIGN PROTOCOLS
-# ---------------------------------------------------------
-st.set_page_config(
-    page_title="Drake Institute: National Resilience Engine",
-    layout="wide",
-    initial_sidebar_state="expanded"
+# Helper function to compute the resilience scaling multiplier based on the temporal engine and switches
+def calculate_multipliers(temporal_stage, active_switches):
+    # 2025-2035 Runway allows a high mitigation impact (+25%), 2035-2050 Closure limits it (+5%)
+    switch_efficiency = 0.25 if temporal_stage == 0 else 0.05
+    
+    # Calculate dampener modifiers based on active policy switches
+    emp_boost = switch_efficiency if "emp" in active_switches else 0.0
+    ubo_delay = True if "ubo" in active_switches else False
+    academic_shield = True if "academic" in active_switches else False
+    defense_boost = 0.15 if "defense" in active_switches else 0.0
+    
+    # Base acceleration factor (shifter for decay curves depending on the timeline era)
+    temporal_decay_multiplier = 1.0 if temporal_stage == 0 else 1.5
+    
+    return emp_boost, ubo_delay, academic_shield, defense_boost, temporal_decay_multiplier
+
+
+# Central Unified Callback to run the simulation engines for all 4 tabs simultaneously
+@app.callback(
+    [Output("infra-metric-kaohsiung", "children"),
+     Output("infra-metric-lng", "children"),
+     Output("infra-metric-water", "children"),
+     Output("infra-simulation-graph", "figure"),
+     Output("c2-matrix-table-container", "children"),
+     Output("c2-simulation-graph", "figure"),
+     Output("semi-metric-value", "children"),
+     Output("semi-metric-mirror", "children"),
+     Output("semi-simulation-graph", "figure"),
+     Output("asymmetric-threat-alert-box", "children"),
+     Output("spark-simulation-graph", "figure")],
+    [Input("core-module-tabs", "active_tab"),
+     Input("escalation-slider", "value"),
+     Input("temporal-slider", "value"),
+     Input("switch-emp", "value"),
+     Input("switch-ubo", "value"),
+     Input("switch-academic", "value"),
+     Input("switch-defense", "value")]
 )
+def run_national_resilience_simulation(active_tab, escalation, temporal, emp_sw, ubo_sw, acad_sw, def_sw):
+    # Collect collective switch values
+    active_switches = []
+    if emp_sw: active_switches.append("emp")
+    if ubo_sw: active_switches.append("ubo")
+    if acad_sw: active_switches.append("academic")
+    if def_sw: active_switches.append("defense")
+    
+    # Extract calculated mathematical multipliers
+    emp_boost, ubo_delay, academic_shield, defense_boost, decay_mult = calculate_multipliers(temporal, active_switches)
+    
+    # Prevent callback calculation breaks if components aren't mounted yet
+    blank_fig = go.Figure(layout=dict(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=10, r=10, t=10, b=10), height=50))
+    
+    # Initialize all returns with defaults to ensure stable packing layout
+    k_html, l_html, w_html = "", "", ""
+    infra_fig = blank_fig
+    c2_table_html = ""
+    c2_fig = blank_fig
+    semi_val_html, semi_mir_html = "", ""
+    semi_fig = blank_fig
+    spark_alert_html = ""
+    spark_fig = blank_fig
 
-st.markdown("""
-    <style>
-    .main-title { font-size:2.4rem !important; font-weight:700; color:#ffffff; margin-bottom:0.5rem; }
-    .subtitle { font-size:1.1rem !important; color:#cccccc; margin-bottom:1.5rem; }
-    .card { background-color: #1e1e1e; padding: 20px; border-radius: 8px; border: 1px solid #333333; margin-bottom: 15px; }
-    </style>
-    """, unsafe_allow_html=True)
+    # =========================================================================
+    # MODULE 1 ENGINE: PHYSICAL INFRASTRUCTURE LIFELINES
+    # =========================================================================
+    # 1. Kaohsiung Logistics Timeline
+    if escalation <= 2:
+        k_cap = 100 if not ubo_delay else 100
+        k_status, k_color = "BASELINE STABLE", ACCENT_SUCCESS
+    elif escalation in [3, 4]:
+        k_cap = 60 if ubo_delay else 40
+        k_status, k_color = "QUARANTINE DELAY (T+0 to T+3)", ACCENT_WARN
+    else: # Stages 5-6
+        k_cap = 35 if ubo_delay else 15
+        k_status, k_color = "CRITICAL ASPHYXIATION (T+11+ Days)", ACCENT_FAIL
+        
+    k_html = html.Div([
+        html.Div("KAOHSIUNG PORT CAPACITY", style={"fontSize": "0.75rem", "color": TEXT_MUTED}),
+        html.H4(f"{k_cap}%", style={"color": k_color, "margin": "0"}),
+        html.Div(k_status, style={"fontSize": "0.65rem", "color": "#fff", "fontWeight": "bold"})
+    ])
+    
+    # 2. LNG Grid Compression State
+    lng_phase = min(max(1, escalation - 2), 4) if escalation > 2 else 1
+    if lng_phase == 1: lng_lbl, lng_color = "PHASE 1: NORMAL", ACCENT_SUCCESS
+    elif lng_phase == 2: lng_lbl, lng_color = "PHASE 2: THROTTLED", ACCENT_INFO
+    elif lng_phase == 3: lng_lbl, lng_color = "PHASE 3: CURTAILMENT", ACCENT_WARN
+    else: lng_lbl, lng_color = "PHASE 4: ISOLATION", ACCENT_FAIL
+    
+    l_html = html.Div([
+        html.Div("LNG RESERVES SYSTEM STATE", style={"fontSize": "0.75rem", "color": TEXT_MUTED}),
+        html.H5(lng_lbl, style={"color": lng_color, "margin": "4px 0"}),
+        html.Div(f"System Redundancy -{(escalation-1)*12}%", style={"fontSize": "0.65rem", "color": "#fff"})
+    ])
+    
+    # 3. Water Utilities Degradation Buffer
+    if escalation >= 4:
+        w_lbl, w_color, w_sub = "7-DAY BUFFER COUNTDOWN", ACCENT_FAIL, "Pressure failure cascade risk"
+    else:
+        w_lbl, w_color, w_sub = "BUFFERS FUNCTIONAL", ACCENT_SUCCESS, "Grid utility pressure normal"
+        
+    w_html = html.Div([
+        html.Div("WATER / SANITATION INTEGRITY", style={"fontSize": "0.75rem", "color": TEXT_MUTED}),
+        html.H5(w_lbl, style={"color": w_color, "margin": "4px 0"}),
+        html.Div(w_sub, style={"fontSize": "0.65rem", "color": "#fff"})
+    ])
+    
+    # Generate Infrastructure Chart Waveform
+    x_timeline = [f"T+{d} Days" for d in range(0, 15)]
+    # Mathematical decay model matching calculated compound stress parameters
+    y_infra = [max(min(100 - (i * (escalation * 1.3) * decay_mult) + (emp_boost * 100), 100), 10) for i in range(0, 15)]
+    
+    infra_fig = {
+        'data': [go.Scatter(x=x_timeline, y=y_infra, mode='lines+markers', name='Functional Integrity Index', line=dict(color=ACCENT_INFO, width=3))],
+        'layout': go.Layout(
+            title=dict(text=f"Predictive Infrastructure Decay Curve (Stage {escalation} Parameters)", font=dict(color='#fff', size=12)),
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            xaxis=dict(gridcolor='#1e222b', tickfont=dict(color='#888')),
+            yaxis=dict(gridcolor='#1e222b', tickfont=dict(color='#888'), title="System Performance %", range=[0, 105]),
+            margin=dict(l=50, r=20, t=40, b=30), height=260
+        )
+    }
 
-st.markdown('<p class="main-title">🛡️ National Resilience Simulator: Compounded Stress Engine</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Sovereign Risk Architecture Framework & System Attrition Model (2026)</p>', unsafe_allow_html=True)
-st.markdown("---")
+    # =========================================================================
+    # MODULE 2 ENGINE: 5-LAYERED COMMUNICATION DEFENCE STRATEGY
+    # =========================================================================
+    # Build dynamic status attributes for the communication array
+    leo_h = max(95 - (escalation * 12 * decay_mult) + (defense_boost * 100), 20)
+    leo_stat = "ACTIVE" if leo_h > 50 else ("THROTTLED" if leo_h > 30 else "JAMMED / OVERLOAD")
+    
+    hars_stat = "STANDBY" if escalation < 3 else "ACTIVE FAILOVER"
+    hars_h = 90 if escalation < 3 else max(85 - (escalation * 4), 45)
+    
+    tropo_stat = "OFFLINE (SECURE)" if escalation < 4 else "ENCRYPTED LINK ACTIVE"
+    tropo_h = 100 if escalation < 4 else max(90 - (escalation * 2), 70)
+    
+    fiber_h = max(95 - (escalation * 15 * decay_mult), 10)
+    fiber_stat = "ROUTING NORMAL" if fiber_h > 60 else "COMPROMISED / RE-ROUTED"
+    
+    uhf_h = 75 + int(defense_boost * 15)
+    uhf_stat = "EMERGENCY READY"
+    
+    # Render premium status matrix diagnostic table rows
+    c2_table_html = dbc.Table([
+        html.Thead(html.Tr([html.Th("Communication Defense Layer"), html.Th("Operational Status"), html.Th("Signal Health Index")])),
+        html.Tbody([
+            html.Tr([html.Td("Layer 1: LEO Satellite Array", className="fw-bold"), html.Td(leo_stat), html.Td(f"{int(leo_h)}%", className="text-info")]),
+            html.Tr([html.Td("Layer 2: High-Altitude Radio Systems (HARS)", className="fw-bold"), html.Td(hars_stat), html.Td(f"{int(hars_h)}%", className="text-info")]),
+            html.Tr([html.Td("Layer 3: Troposcatter Array Backbone", className="fw-bold"), html.Td(tropo_stat), html.Td(f"{int(tropo_h)}%", className="text-info")]),
+            html.Tr([html.Td("Layer 4: Hardened Terrestrial Fiber Network", className="fw-bold"), html.Td(fiber_stat), html.Td(f"{int(fiber_h)}%", className="text-info")]),
+            html.Tr([html.Td("Layer 5: HF/VHF/UHF Resilient Tactical Radio", className="fw-bold"), html.Td(uhf_stat), html.Td(f"{int(uhf_h)}%", className="text-info")]),
+        ])
+    ], bordered=True, dark=True, hover=True, responsive=True, size="sm", className="bg-black small border-secondary text-light")
+    
+    # Render C2 Health bar matrix representation
+    c2_fig = {
+        'data': [go.Bar(x=["LEO", "HARS", "Tropo", "Fiber", "HF/UHF"], y=[leo_h, hars_h, tropo_h, fiber_h, uhf_h], marker_color=ACCENT_SUCCESS, width=0.4)],
+        'layout': go.Layout(
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            xaxis=dict(tickfont=dict(color='#888')), yaxis=dict(gridcolor='#1e222b', tickfont=dict(color='#888'), range=[0, 105]),
+            margin=dict(l=40, r=20, t=10, b=30), height=140
+        )
+    }
 
-# ---------------------------------------------------------
-# 2. SIDEBAR - EXECUTIVE RADAR (STRATEGIC CONTROLS)
-# ---------------------------------------------------------
-st.sidebar.header("🕹️ Macro Stress & Intervention Radars")
+    # =========================================================================
+    # MODULE 3 ENGINE: SILICON SHIELD ANALYSIS
+    # =========================================================================
+    base_val = 155.8 # Billions USD
+    current_val = max(base_val - (escalation * 22.5 * decay_mult), 12.0)
+    
+    semi_val_html = html.Div([
+        html.Div("ADVANCED FAB NODE EXPORT RUNRATE (<7nm)", style={"fontSize": "0.75rem", "color": TEXT_MUTED}),
+        html.H4(f"${current_val:.1f}B USD", style={"color": ACCENT_WARN if current_val > 50 else ACCENT_FAIL, "margin": "0"}),
+        html.Div("Estimated quarterly baseline throughput", style={"fontSize": "0.65rem", "color": "#fff"})
+    ])
+    
+    mirror_rate = 98 if academic_shield else max(98 - (escalation * 14 * decay_mult), 30)
+    semi_mir_html = html.Div([
+        html.Div("OFFSHORE PROCESS SCHEMA MIRRORING", style={"fontSize": "0.75rem", "color": TEXT_MUTED}),
+        html.H4(f"{int(mirror_rate)}%", style={"color": ACCENT_SUCCESS if mirror_rate > 80 else ACCENT_WARN, "margin": "0"}),
+        html.Div("Fab recipe redundancy & code lockouts", style={"fontSize": "0.65rem", "color": "#fff"})
+    ])
+    
+    # Advanced node manufacturing buffer runway countdown math
+    x_nodes = ["Industrial Gases", "Raw Ingestion", "Lithography", "Testing Array", "Global Outbound"]
+    y_semi = [max(100 - (escalation * i * 3 * decay_mult), 15) for i in range(1, 6)]
+    if emp_sw: y_semi = [min(v + 15, 100) for v in y_semi]
+    
+    semi_fig = {
+        'data': [go.Scatter(x=x_nodes, y=y_semi, fill='tozeroy', mode='none', fillcolor='rgba(243, 156, 18, 0.15)', name='Node Security Buffer')],
+        'layout': go.Layout(
+            title=dict(text="Supply Dependency Pipeline Continuity Buffer", font=dict(color='#fff', size=11)),
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            xaxis=dict(tickfont=dict(color='#888')), yaxis=dict(gridcolor='#1e222b', tickfont=dict(color='#888'), range=[0, 105]),
+            margin=dict(l=40, r=20, t=30, b=30), height=200
+        )
+    }
 
-st.sidebar.subheader("⚠️ Disruption Threat Vector")
-scenario_type = st.sidebar.selectbox(
-    "Select Red Team Threat Vector:",
-    options=[
-        "Scenario A: CCG Blockade (Kaohsiung Focus & Bashi Strait High-Risk Gridlock)", 
-        "Scenario B: CCG Grey-Zone Interdiction (Qatar & Australia Shipments via Miyako Channel)", 
-        "Scenario C: Critical Infrastructure LNG Node Physical Shock Event"
+    # =========================================================================
+    # MODULE 4 ENGINE: ASYMMETRIC FLASHPOINTS
+    # =========================================================================
+    shock_index = escalation * 16
+    if academic_shield: shock_index -= 20
+    shock_index = max(min(shock_index, 100), 5)
+    
+    if escalation >= 4 and not academic_shield:
+        alert_text = "CRITICAL: Dual-use technology transfer risk flagged. Malware telemetry scraping active."
+        alert_col = "danger"
+    elif escalation >= 3:
+        alert_text = "WARNING: Asymmetric coordinate drift detected around strategic infrastructure hubs."
+        alert_col = "warning"
+    else:
+        alert_text = "System Nominal. Asymmetric monitoring scripts scanning gray-zone vectors."
+        alert_col = "success"
+        
+    spark_alert_html = dbc.Alert(alert_text, color=alert_col, className="py-2 small small font-weight-bold text-center")
+    
+    # 7 Mapped Sleeper Scenarios Coordinate Vectors
+    scenarios = ["Qixingtan Spark", "Hualien Link", "Network Spoof", "Financial Decouple", "Port Subversion", "Transit Stasis", "Media Infiltration"]
+    probability_y = [max(min((escalation * 14) + (i*4) - (25 if academic_shield else 0), 95), 10) for i in range(7)]
+    impact_x = [20, 35, 45, 60, 75, 80, 90]
+    
+    spark_fig = {
+        'data': [go.Scatter(
+            x=impact_x, y=probability_y, mode='markers+text',
+            text=scenarios, textposition="top center",
+            marker=dict(size=12, color=ACCENT_FAIL, symbol="diamond"),
+            textfont=dict(color="#fff", size=9)
+        )],
+        'layout': go.Layout(
+            title=dict(text="Asymmetric Scenarios: Probability vs Strategic Impact Matrix", font=dict(color='#fff', size=11)),
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            xaxis=dict(title="Strategic Shock Level", gridcolor='#1e222b', tickfont=dict(color='#888'), range=[0, 110]),
+            yaxis=dict(title="Active Threat Probability %", gridcolor='#1e222b', tickfont=dict(color='#888'), range=[0, 110]),
+            margin=dict(l=50, r=30, t=40, b=40), height=220
+        )
+    }
+
+    return (k_html, l_html, w_html, infra_fig, 
+            c2_table_html, c2_fig, 
+            semi_val_html, semi_mir_html, semi_fig, 
+            spark_alert_html, spark_fig)
+
+
+# --- STEP 3: INJECT COMPONENT GRID GENERATOR FOR TIER 2 REPOSITORY ---
+@app.callback(
+    Output("restricted-grid-container", "children"),
+    Input("global-dummy-state", "data")
+)
+def populate_restricted_ui(_):
+    premium_papers = [
+        {"title": "WP - Ghost Strike", "desc": "Covert EMP & Grid Compression Dynamics", "mod": "Module 1: Physical Disruption"},
+        {"title": "WP - Silent Horizon", "desc": "Radar Blackout & Tactical Network Spoofing", "mod": "Module 1: Physical Disruption"},
+        {"title": "WP - Operation Big Bertha", "desc": "Maritime Lawfare & Blockade Quarantine Stasis", "mod": "Module 2: Maritime Strategy"},
+        {"title": "WP - Defeating the Shadow War", "desc": "Hybrid Assault & Institutional Trust Erosion", "mod": "Module 3: Cognitive & Subversion"},
+        {"title": "WP - The Dove vs. The Hawk", "desc": "U.S. Leadership Posture Variance Engines", "mod": "Module 4: Geopolitical Variance"},
+        {"title": "WP - The Bomb Taiwan Never Had", "desc": "Historical Sovereign Restriction Baselines", "mod": "Module 4: Geopolitical Variance"},
+        {"title": "WP - South China Sea IQ Test", "desc": "Gray-Zone Force Adjustments & Signaling", "mod": "Module 6: Regional Context"},
+        {"title": "WP - The Sino Neo-Tanaka Plan", "desc": "Indo-Pacific Deterrence Collapse Framework", "mod": "Module 6: Regional Context"}
     ]
-)
-
-st.sidebar.subheader("⚡ Energy & Chemical Allocation")
-package_tier = st.sidebar.radio(
-    "Stacked Investment Packages:",
-    options=["Status Quo (No Intervention)", "Moderate Investment Package", "Advanced Resilience Package", "Full Strategic Resilience Package"]
-)
-
-st.sidebar.subheader("💧 Module 4: Water Security Levers")
-water_tier = st.sidebar.selectbox(
-    "Chip-Fabs Water Security Posture:",
-    options=["Standard Municipal Feed (Grid Dependent)", "On-Site Ultra-Pure Water (UPW) Reclamation", "Hardened Desalination + Local Power Micro-Grid"]
-)
-
-st.sidebar.markdown("---")
-st.sidebar.caption("Drake Institute of Geostrategic Intelligence • Enterprise Tier Model")
-
-# ---------------------------------------------------------
-# 3. INTERACTIVE CORRIDOR ESCORT ENGINE (WHITE PAPER LOGIC)
-# ---------------------------------------------------------
-st.markdown("### 🚢 CCG Lawfare Escort Response & Corridor Friction Engine")
-st.markdown("###### White Paper Logic Matrix: Modeling 12,000-Ton White-Hull Cordon vs. ROC Escort Availability")
-
-col_esc1, col_esc2 = st.columns(2)
-with col_esc1:
-    ccg_hull_count = st.slider("Deployable Mega-CCG Hulls (White-Hull Lawfare Loophole)", 2, 24, 16 if "Scenario A" in scenario_type else 8 if "Scenario B" in scenario_type else 2)
-    roc_escort_ratio = st.slider("ROC Navy / CGA Escort Commitment Rate (%)", 0, 100, 35 if "Scenario A" in scenario_type else 65 if "Scenario B" in scenario_type else 100)
-with col_esc2:
-    escort_delay_days = st.number_input("Calculated ROC Fleet Operational Response Delay (Days)", 1.0, 14.0, 6.5 if "Scenario A" in scenario_type else 2.0 if "Scenario B" in scenario_type else 1.0, step=0.5)
-
-# Calculate Escort Breakthrough Metrics and Owner Panic Flight
-escort_success_rate = max(min(int(roc_escort_ratio - (ccg_hull_count * 2.5)), 100), 5)
-commercial_flight_rate = max(min(int((escort_delay_days * 8) + (ccg_hull_count * 2) - (roc_escort_ratio * 0.3)), 95), 5)
-
-# ---------------------------------------------------------
-# 4. TERRESTRIAL HARDENING & SILICON SHIELD INFRASTRUCTURE
-# ---------------------------------------------------------
-st.markdown("---")
-st.markdown("### 🏛️ Terrestrial Hardening & Silicon Shield Infrastructure Cores")
-st.markdown("###### Defensive Redundancy Matrix: Insulating Production Nodes from External Supply Arrhythmia")
-
-col_hard1, col_hard2 = st.columns(2)
-with col_hard1:
-    zhunan_hardening = st.slider("Zhunan Production Facility Structural Hardening Level (%)", 0, 100, 20, help="Upgrading power backup, seismic resilience, and localized chemical reserves at Zhunan.")
-    underwater_infra = st.checkbox("Deploy Redundant Underwater Coastal Intake Infrastructure Nodes", value=False, help="Hardening subsea coolant lines, deep coastal intakes, and backup subsea loops against grey-zone meddling.")
-with col_hard2:
-    onshore_buffer_days = st.slider("Onshore Precursor Molecule Strategic Reserves (Days)", 3, 30, 7)
-
-# Calculate Terrestrial Resilience Boost Factors
-zhunan_boost = int(zhunan_hardening / 10)
-underwater_boost_days = 6 if underwater_infra else 0
-molecule_buffer_boost = int((onshore_buffer_days - 7) * 0.8)
-
-# ---------------------------------------------------------
-# 5. ADVANCED QUANT MARITIME ENGINE & BACKEND MATH
-# ---------------------------------------------------------
-base_charter_rate = 85000  
-baltic_base_index = 1800
-
-if "Scenario A" in scenario_type:
-    base_mean = 12
-    base_std = 2
-    lng_cutoff_day = 11
-    risk_multiplier = 1.0 + (ccg_hull_count * 0.3)
-    active_transit = max(100 - commercial_flight_rate, 5)
-    holding_safe = int(commercial_flight_rate * 0.7)
-    defection = int(commercial_flight_rate * 0.3)
-    flight_penalty = int(commercial_flight_rate / 15)
-    hull_status = "Mass Retreat: Vessels holding in Subic Bay / Diversion to Tokyo Bay & Yokohama (Negishi/Sodegaura)"
-elif "Scenario B" in scenario_type:
-    base_mean = 31
-    base_std = 4
-    lng_cutoff_day = 25
-    risk_multiplier = 1.0 + (ccg_hull_count * 0.15)
-    active_transit = max(100 - commercial_flight_rate, 10)
-    holding_safe = int(commercial_flight_rate * 0.6)
-    defection = int(commercial_flight_rate * 0.4)
-    flight_penalty = int(commercial_flight_rate / 25)
-    hull_status = "Tactical Hedging: Safe-harbor positioning inside Southern Japan anchorage nodes"
-else:
-    base_mean = 6.5
-    base_std = 1
-    lng_cutoff_day = 5
-    risk_multiplier = 1.1
-    active_transit, holding_safe, defection = 90, 8, 2
-    flight_penalty = 0
-    hull_status = "Standard Operations: Normal corridor lanes active via Taiwan Strait"
-
-current_charter_rate = int(base_charter_rate * risk_multiplier)
-current_baltic_index = int(baltic_base_index * risk_multiplier)
-
-# Process Defense Investment Interventions
-helium_boost, gas_boost, grid_boost, lng_boost, water_boost = 0, 0, 0, 0, 0
-capex_tier = "Zero Base"
-efficiency = "Poor (Deterministic Cascade Failure)"
-
-if package_tier == "Moderate Investment Package":
-    helium_boost, gas_boost, capex_tier = 5, 12, "Low - Medium Allocations"
-    efficiency = "Excellent for isolated local shocks; vulnerable to sustained attrition"
-elif package_tier == "Advanced Resilience Package":
-    helium_boost, gas_boost, grid_boost, lng_boost, capex_tier = 7, 14, 7, 17, "High Institutional Tier"
-    efficiency = "Strong Impact (Decouples terrestrial logistics failure points)"
-elif package_tier == "Full Strategic Resilience Package":
-    helium_boost, gas_boost, grid_boost, lng_boost, capex_tier = 10, 20, 25, 40, "Sovereign/Macro Enterprise"
-    efficiency = "Strategic Deterrence Threshold Achieved"
-
-if water_tier == "On-Site Ultra-Pure Water (UPW) Reclamation":
-    water_boost = 6
-elif water_tier == "Hardened Desalination + Local Power Micro-Grid":
-    water_boost = 12
-
-# Compile total protective modifiers including restored Silicon Shield factors
-total_resilience_boost = (helium_boost + gas_boost + grid_boost + lng_boost + water_boost + zhunan_boost + underwater_boost_days + molecule_buffer_boost) - flight_penalty
-
-# Run Core Monte Carlo Engine
-runs = 10000
-timeline_days = 90
-
-np.random.seed(42)
-simulated_baseline = np.random.normal(base_mean, base_std, runs)
-simulated_protected = simulated_baseline + total_resilience_boost
-
-timeline = np.arange(0, timeline_days)
-prob_baseline = np.array([(simulated_baseline > t).mean() for t in timeline])
-prob_protected = np.array([(simulated_protected > t).mean() for t in timeline])
-mean_survival_days = max(int(np.mean(simulated_protected)), 1)
-
-status_color = "🔴 Critical Convergence" if mean_survival_days < 20 else "🟠 Degraded System" if mean_survival_days <= 45 else "🟡 Stressed" if mean_survival_days <= 60 else "🟢 Normal"
-
-st.markdown("---")
-
-# ---------------------------------------------------------
-# 6. USER INTERFACE ARCHITECTURE (FOUR-TAB CHASSIS)
-# ---------------------------------------------------------
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Live Quant Simulator", "⚓ Phase 2: Port Chokepoints", "📋 System Scorecards & Cascades", "🚨 Executive Policy Framework"])
-
-with tab1:
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric(label="Systemic Survival Floor (Autarky)", value=f"{mean_survival_days} Days", delta=f"+{total_resilience_boost} Net Days" if total_resilience_boost > 0 else "Baseline Friction")
-    with col2:
-        st.metric(label="National Sovereignty Status", value=status_color)
-    with col3:
-        st.metric(label="Model CAPEX Requirements", value=capex_tier)
-
-    # Maritime Financial Data Display
-    st.markdown("### 🗠 Real-Time Maritime Freight & Insurance Premium Panel")
-    st.info(f"**Current Hull Dispersal Directives:** {hull_status}")
     
-    m1, m2, m3, m4 = st.columns(4)
-    with m1:
-        st.markdown(f"<div class='card'>📋 <b>Clarksons Assessment</b><br><span style='font-size:1.5rem;color:#f0ad4e;'>${current_charter_rate:,}/day</span><br><small>Spot Charter Rate Inflation</small></div>", unsafe_allow_html=True)
-    with m2:
-        st.markdown(f"<div class='card'>📈 <b>Baltic Freight Index</b><br><span style='font-size:1.5rem;color:#d9534f;'>{current_baltic_index:,}</span><br><small>War-Risk Premium Multiplier</small></div>", unsafe_allow_html=True)
-    with m3:
-        st.markdown(f"<div class='card'>⚓ <b>Tokyo/Subic Escape Profile</b><br><span style='font-size:1.3rem;color:#5bc85c;'>{holding_safe}% Retreated</span><br><small>Idling in Safe Anchorages</small></div>", unsafe_allow_html=True)
-    with m4:
-        st.markdown(f"<div class='card'>🔄 <b>Commercial Flight Scale</b><br><span style='font-size:1.3rem;color:#0275d8;'>{commercial_flight_rate}% Diverted</span><br><small>Vessels Avoiding Taiwan Corridor</small></div>", unsafe_allow_html=True)
+    return dbc.Row([
+        dbc.Col(
+            dbc.Card(
+                dbc.CardBody([
+                    html.Div(wp["mod"], style={"fontSize": "0.7rem", "color": ACCENT_WARN, "letterSpacing": "1px"}, className="fw-bold mb-1"),
+                    html.H6(wp["title"], className="text-white mb-1", style={"fontSize": "0.85rem"}),
+                    html.P(wp["desc"], className="text-muted small mb-3", style={"fontSize": "0.75rem", "lineHeight": "1.2"}),
+                    dbc.Button(
+                        [html.I(className="bi bi-lock-fill me-1"), "Inspect Pipeline"],
+                        id={'type': 'restricted-node', 'index': i},
+                        color="outline-warning", size="sm", className="w-100 text-start btn-sm p-1 ps-2",
+                        style={"fontSize": "0.75rem", "borderColor": "#22252e"}
+                    )
+                ]),
+                style={"backgroundColor": INNER_BG, "borderColor": BORDER_COLOR},
+                className="h-100"
+            ),
+            width=6, className="mb-3"
+        ) for i, wp in enumerate(premium_papers)
+    ])
 
-    st.markdown("---")
-    
-    # Visualization Columns
-    viz_col1, viz_col2 = st.columns(2)
-    with viz_col1:
-        st.markdown("### Probability-Weighted Infrastructure Survival Curve")
-        plt.style.use('dark_background') 
-        fig1, ax1 = plt.subplots(figsize=(6, 3.5))
-        ax1.plot(timeline, prob_baseline * 100, color="#d9534f", linestyle="--", linewidth=2, label="Status Quo Profile")
-        ax1.plot(timeline, prob_protected * 100, color="#0275d8", linewidth=3, label="Simulated Defense Curve")
-        ax1.set_facecolor("#121212")
-        fig1.patch.set_facecolor("#121212")
-        ax1.set_xlabel("Days Elapsed Under Stress Conditions")
-        ax1.set_ylabel("Probability of Uninterrupted Output (%)")
-        ax1.set_xlim(0, timeline_days)
-        ax1.set_ylim(0, 105)
-        ax1.grid(True, linestyle=":", alpha=0.3, color="#555555")
-        ax1.legend(facecolor="#222222", edgecolor="#444444", labelcolor="#cccccc", fontsize='small')
-        st.pyplot(fig1)
 
-    with viz_col2:
-        st.markdown("### LNG Shipping Cut-Off & Inventory Decay Tracker")
-        extended_lng_buffer = max(lng_cutoff_day + lng_boost - flight_penalty, 1)
-        lng_inventory = []
-        for t in timeline:
-            if t < extended_lng_buffer:
-                lng_inventory.append(max(100 * (1.0 - (t / extended_lng_buffer)), 0))
-            else:
-                lng_inventory.append(0)
-                
-        fig2, ax2 = plt.subplots(figsize=(6, 3.5))
-        ax2.fill_between(timeline, lng_inventory, color="#f0ad4e", alpha=0.2, label="Sovereign Inventory Volume")
-        ax2.plot(timeline, lng_inventory, color="#f0ad4e", linewidth=2.5)
-        ax2.axvline(x=lng_cutoff_day, color="#d9534f", linestyle=":", label=f"Baseline Exhaustion (Day {lng_cutoff_day})", linewidth=2)
-        if lng_boost > 0:
-            ax2.axvline(x=extended_lng_buffer, color="#5cb85c", linestyle="-.", label=f"Adjusted Run (Day {int(extended_lng_buffer)})", linewidth=2)
-        ax2.set_facecolor("#121212")
-        fig2.patch.set_facecolor("#121212")
-        ax2.set_xlabel("Days Elapsed Post Shipping Cut-Off")
-        ax2.set_ylabel("Available Grid Generation Capacity (%)")
-        ax2.set_xlim(0, 45)
-        ax2.set_ylim(0, 105)
-        ax2.grid(True, linestyle=":", alpha=0.3, color="#555555")
-        ax2.legend(facecolor="#222222", edgecolor="#444444", labelcolor="#cccccc", fontsize='small')
-        st.pyplot(fig2)
-
-    st.markdown("---")
-    st.markdown("### 🏬 Cross-Sector Cascade Matrix & Global Impact")
-    col_l, col_r = st.columns(2)
-    with col_l:
-        if water_tier == "Standard Municipal Feed (Grid Dependent)":
-            st.error("💧 **Water-Energy Cascade Active:** Electrical grid instability forces instant shutoffs at municipal pumping stations. Without localized UPW reclamation, semiconductor lines hit an immediate hard halt due to filtration failure.")
-        elif water_tier == "On-Site Ultra-Pure Water (UPW) Reclamation":
-            st.warning("🔄 **Recycling Buffer Engaged:** Closed-loop recycling nodes mitigate immediate municipal drop-offs. Internal circulation slows the volumetric attrition decay curve, buying operational days independent of the civilian grid.")
-        else:
-            st.success("🌊 **Infrastructure Decoupling:** Hardened coastal desalination infrastructure powered by local energy micro-grids fully insulates core manufacturing loops from public infrastructure attrition.")
+# --- STEP 3: CONTROL INTERACTION OVERLAYS FOR MODALS ---
+@app.callback(
+    [Output("premium-licensing-modal", "is_open"), Output("premium-modal-content", "children")],
+    [Input({'type': 'restricted-node', 'index': ALL}, 'n_clicks'), Input("close-premium-modal-btn", "n_clicks")],
+    [State("premium-licensing-modal", "is_open")]
+)
+def handle_restricted_modals(lock_clicks, close_click, is_open):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return is_open, dash.no_update
+        
+    triggered_id = ctx.triggered[0]['prop_id']
+    if "close-premium-modal-btn" in triggered_id:
+        return False, dash.no_update
+        
+    if "restricted-node" in triggered_id and any(lock_clicks):
+        premium_papers = [
+            {"title": "WP - Ghost Strike", "desc": "Covert EMP & Grid Compression Dynamics", "details": "Models covert high-altitude electromagnetic pulse impacts across domestic defensive infrastructure coordinates, evaluating real-time localized energy isolation times and black-start backup capabilities."},
+            {"title": "WP - Silent Horizon", "desc": "Radar Blackout & Tactical Network Spoofing", "details": "Simulates multi-domain optical and electromagnetic blindness across primary early-warning defense installations, mapping systemic latencies during active spoofing windows."},
+            {"title": "WP - Operation Big Bertha", "desc": "Maritime Lawfare & Blockade Quarantine Stasis", "details": "Maps out a scenario where an adversary uses legal and commercial quarantines rather than open kinetic engagement to restrict maritime trade routes without triggering international tripwires."},
+            {"title": "WP - Defeating the Shadow War", "desc": "Hybrid Assault & Institutional Trust Erosion", "details": "Tracks gray-zone economic coercion and structural cognitive attacks designed to target critical media infrastructure, financial protocols, and community trust networks."},
+            {"title": "WP - The Dove vs. The Hawk", "desc": "U.S. Leadership Posture Variance Engines", "details": "Calculates defense dependency timelines by cross-referencing shifting geopolitical postures and security agreement parameters under divergent Western political leadership scenarios."},
+            {"title": "WP - The Bomb Taiwan Never Had", "desc": "Historical Sovereign Restriction Baselines", "details": "A detailed doctrinal lookup tool examining legacy structural limitations placed on sovereign defensive programs, establishing an analytical baseline for current vulnerability matrices."},
+            {"title": "WP - South China Sea IQ Test", "desc": "Gray-Zone Force Adjustments & Signaling", "details": "Triggers multi-vector tactical naval deployments to model gray-zone deterrence thresholds, commercial shipping re-routing protocols, and maritime signaling dynamics."},
+            {"title": "WP - The Sino Neo-Tanaka Plan", "desc": "Indo-Pacific Deterrence Collapse Framework", "details": "Tracks regional industrial decoupling pathways, raw material access channels, and institutional vulnerability mapping to model structural deterrence decay."}
+        ]
+        
+        try:
+            clicked_index = eval(triggered_id.split(".")[0])["index"]
+            wp = premium_papers[clicked_index]
+        except:
+            wp = {"title": "Restricted Framework Module", "desc": "", "details": "Strategic analytical data node."}
             
-        if mean_survival_days < 14:
-            st.error("⚠️ **Immediate Tech Pipeline Freeze:** Advanced node manufacturing (3nm and below) hits a Cold-Halt. Global economic losses exceed **$250 Billion/week**.")
-        elif mean_survival_days <= 45:
-            st.warning("⚡ **Downstream Depletion & Friction:** High market volatility. Severe molecule arrhythmia limits assembly throughput.")
-        else:
-            st.success("💎 **Strategic Attrition Defended:** The system extends past the critical 60-day target, shifting the geopolitical risk-reward equation.")
-
-    with col_r:
-        st.markdown("**Intervention Efficiency Breakdown**")
-        st.write(f"**Strategic Assessment:** {efficiency}")
-        st.json({
-            "Module 2: Escort Success Breakthrough Probability": f"{escort_success_rate}% Success Probability",
-            "Silicon Shield: Zhunan Facility Hardening Factor": f"+{zhunan_boost} Days Facility Structural Cushion",
-            "Silicon Shield: Underwater Intake Resilience Loop": f"+{underwater_boost_days} Days Intake Isolation Window",
-            "Module 3: Precursor Strategic Reservist Buffer": f"+{molecule_buffer_boost} Days Pure Material Runway",
-            "Module 4: Ultra-Pure Water (UPW) Continuity Vector": f"+{water_boost} Closed-Loop Buffering Days",
-            "Maritime Hull Flight Flight Penalty": f"-{flight_penalty} Days (Owner Flight Accounted)"
-        })
-
-# --- TAB 2: PHASE 2 PORT CHOKEPOINTS ENGINE ---
-with tab2:
-    st.markdown("### ⚓ Module 2: Physical Logistics Chokepoints & Port Capacity")
-    st.markdown("###### Real-Time Attrition Modeling: Port of Kaohsiung vs. Port of Keelung")
-    
-    st.markdown("##### 🛠️ Port Operational Adjustments")
-    p_col1, p_col2 = st.columns(2)
-    with p_col1:
-        kao_efficiency = st.slider("Port of Kaohsiung Crane Operating Efficiency (%)", 0, 100, 100 if "Scenario B" in scenario_type else 30 if "Scenario A" in scenario_type else 100)
-        kao_backlog = st.number_input("Kaohsiung Container Yard Congestion Factor (Multiplier)", 1.0, 5.0, 3.8 if "Scenario A" in scenario_type else 1.2, step=0.1)
-    with p_col2:
-        kee_efficiency = st.slider("Port of Keelung Offloading Bottleneck Threshold (%)", 0, 100, 85 if "Scenario B" in scenario_type else 50 if "Scenario A" in scenario_type else 100)
-        kee_diversion_load = st.checkbox("Automatically Reroute Diverted Southern Hulls to Keelung?", value=True if "Scenario A" in scenario_type else False)
-
-    base_processing_days = 2.5
-    if kee_diversion_load and kao_efficiency < 50:
-        port_stress_multiplier = (kao_backlog * 1.6) + (100 - kee_efficiency) / 50
-        port_status_msg = "⚠️ SEVERE PORT CONGESTION: Keelung structural capacity exceeded by diverted southern freight hulls."
-        port_color = "error"
-    else:
-        port_stress_multiplier = kao_backlog + (100 - kao_efficiency) / 100
-        port_status_msg = "🟢 Port processing lines managing normal queuing profiles."
-        port_color = "success"
+        modal_body = html.Div([
+            html.H4(wp["title"], className="text-warning mb-1"),
+            html.P(wp["desc"], className="text-muted small mb-4", style={"fontStyle": "italic"}),
+            html.H6("ANALYTICAL MODULE OVERVIEW:", className="text-white small fw-bold"),
+            html.P(wp["details"], className="text-light small mb-4", style={"lineHeight": "1.5"}),
+            html.Hr(style={"borderColor": BORDER_COLOR}),
+            html.H6("COMMERCIAL PIPELINE REQUIREMENT:", className="text-danger small fw-bold"),
+            html.P("This dataset is integrated exclusively via the Tier 2 Institutional Multi-Year Licensing Framework. Active annual subscriptions grant enterprise environments quarterly threat parameter updates, custom scenario stress-testing variables, and direct analytical access to the Drake Institute team.", className="text-muted small", style={"lineHeight": "1.4"})
+        ])
+        return True, modal_body
         
-    calculated_clearance_lag = round(base_processing_days * port_stress_multiplier, 1)
-    
-    st.markdown("---")
-    if port_color == "error":
-        st.error(port_status_msg)
-    else:
-        st.success(port_status_msg)
-        
-    pc1, pc2, pc3 = st.columns(3)
-    with pc1:
-        st.markdown(f"<div class='card'>🏗️ <b>Kaohsiung Clearance Delay</b><br><span style='font-size:1.5rem;color:#f0ad4e;'>{calculated_clearance_lag} Days</span><br><small>Baseline: 2.5 Days</small></div>", unsafe_allow_html=True)
-    with pc2:
-        re_routed_pct = 0 if not kee_diversion_load else 45 if "Scenario B" in scenario_type else 85
-        st.markdown(f"<div class='card'>🔄 <b>Northern Diversion Load</b><br><span style='font-size:1.5rem;color:#0275d8;'>{re_routed_pct}% Freight</span><br><small>Keelung Yard Strain</small></div>", unsafe_allow_html=True)
-    with pc3:
-        demurrage_surge = int(25000 * port_stress_multiplier)
-        st.markdown(f"<div class='card'>💸 <b>Daily Demurrage Attrition</b><br><span style='font-size:1.5rem;color:#d9534f;'>${demurrage_surge:,}/ship</span><br><small>Sovereign Financial Leakage</small></div>", unsafe_allow_html=True)
-
-    st.markdown("""
-    💡 **Sovereign Risk Context:** Physical bottlenecks at the pier act as a *Physical-to-Economic conversion mechanism*. 
-    When Kaohsiung crane efficiency falls below 40%, ships are stranded in open waters longer. This increases their 
-    exposure to maritime interdiction vectors and spikes daily spot-freight charter costs exponentially, 
-    forcing institutional charter walk-aways.
-    """)
-
-# --- TAB 3: SYSTEM SCORECARDS & CHRONOLOGICAL CASCADES ---
-with tab3:
-    st.subheader("📋 Core Module Performance & Resilience Scorecard")
-    sc1, sc2, sc3 = st.columns(3)
-    with sc1:
-        st.markdown("### 🚢 Module 2: Port Resilience\n* **Score: 3.1 / 5.0**\n* Physical bottlenecks over storage metrics dictate initial backlogs. Insurance cancellation triggers rapid charter walk-aways.")
-    with sc2:
-        st.markdown("### ⚡ Module 3: Energy Continuity\n* **Score: 3.0 / 5.0**\n* Total reliance on continuous LNG imports creates an immediate high-exposure horizon when storage buffers dry out.")
-    with sc3:
-        st.markdown("### 💧 Module 4: Water Continuity\n* **Score: 2.8 / 5.0**\n* Deep operational coupling to the primary high-voltage grid. Drops quickly into public-health stress thresholds if power fails.")
-
-    st.markdown("---")
-    st.subheader("🕒 Chronological Port Disruption Propagation (T+ Sequence)")
-    st.info("**[T+0]** Throughput reduction begins at port berths, cranes, and offloading systems.")
-    st.info("**[T+6–24 Hours]** LNG shipment backlogs accumulate; specialized chemical unloading delays cascade.")
-    st.info("**[T+2–5 Days]** Industrial gas shortages hit manufacturing fabs; grid operating flexibility tightens critically.")
-    st.info("**[T+5–11 Days]** High-voltage energy buffer depletion; mandatory rolling industrial power cuts begin.")
-    st.warning("**[T+11+ Days]** Full national transition to an energy-rationing triage regime; industrial export capacity drops severely.")
-
-# --- TAB 4: EXECUTIVE POLICY MANDATES ---
-with tab4:
-    st.subheader("🚨 Executive Design Requirements & Infrastructure Mandates")
-    st.markdown("1. **Establish a National Resilience Integration Layer (NRIL)**\n2. **Deploy the National System Stress Index (NSSI)**\n3. **Target Response Latency Reduction**\n4. **Enforce Manual Override Readiness**\n5. **Decentralize Strategic Buffering**")
-    st.markdown("---")
-    st.success("💰 **Commercial Monetization Blueprint (Drake SaaS Licensing Strategy)**")
-    st.markdown("This prototype represents **Step 1** of a highly scalable, subscription-driven enterprise SaaS offering designed for Sovereign Wealth Funds, Macro Asset Allocators, Global Technology Enterprises, and Reinsurance Consortiums.")
-
-st.markdown("---")
-st.caption("Strategic Decision Engine Layer • Integrated Systemic Attrition Model (2026) • Drake Institute of Geostrategic Intelligence.")
+    return is_open, dash.no_update
 
 
+# --- EXECUTION GATEWAYS ---
+if __name__ == '__main__':
+    # Set to debug=False for live investor presentation delivery environments
+    app.run_server(debug=True)
