@@ -2,13 +2,11 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import Input, Output, State, html, dcc
 import plotly.graph_objects as go
-
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
 # --- INITIALIZATION ---
 # This 'app' variable is what your callbacks need
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-# This 'server' variable is what Gunicorn (on Render) needs to start the app
-server = app.server
 
 # ... now your existing helper functions and code follow below ...
 
