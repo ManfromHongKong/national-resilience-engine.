@@ -89,24 +89,7 @@ def calculate_multipliers(temporal_stage, active_switches):
         defense_boost,
         temporal_decay_multiplier
     )
-def calculate_multipliers(temporal_stage, active_switches):
-    # Policy switch effects
-    switch_efficiency = 0.15
-    emp_boost = switch_efficiency if "emp" in active_switches else 0.0
-    ubo_delay = "ubo" in active_switches
-    academic_shield = "academic" in active_switches
-    defense_boost = 0.15 if "defense" in active_switches else 0.0
 
-    # Timeline era multiplier
-    temporal_decay_multiplier = 1.0 if temporal_stage == 0 else 1.5
-
-    return (
-        emp_boost,
-        ubo_delay,
-        academic_shield,
-        defense_boost,
-        temporal_decay_multiplier
-    )
 # Central Unified Callback to run the simulation engines for all 4 tabs simultaneously
 @app.callback(
     [Output("infra-metric-kaohsiung", "children"),
