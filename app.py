@@ -90,11 +90,24 @@ app.layout = dbc.Container([
      Input("switch-defense", "value")]
 )
 def update_all_metrics(tab, esc, temp, emp, ubo, acad, defn):
-    # 1. Create the graph figure
+    # 1. Combine the switches into a list
+    active_switches = []
+    if emp: active_switches.append("emp")
+    if ubo: active_switches.append("ubo")
+    if acad: active_switches.append("academic")
+    if defn: active_switches.append("defense")
+    
+    # 2. Get the multipliers
+    emp_b, ubo_d, acad_s, def_b, temp_m = calculate_multipliers(temp, active_switches)
+    
+    # 3. Create the graph figure using these variables
     fig = go.Figure()
+    # Using the multipliers to make the graph react to the switches!
+    y_values = [10 * (1 + emp_b), (10 - esc) * temp_m, 5, 5 - (esc * 0.5)]
+    
     fig.add_trace(go.Scatter(
         x=[0, 1, 2, 3], 
-        y=[10, 10 - esc, 5, 5 - (esc * 0.5)], 
+        y=y_values, 
         mode='lines+markers',
         line=dict(color='cyan')
     ))
@@ -104,7 +117,5 @@ def update_all_metrics(tab, esc, temp, emp, ubo, acad, defn):
         font=dict(color='white')
     )
     
-    # 2. Return the list (The 4th item is now the 'fig' we created)
-    return ["0", "0", "0", fig, "None", {}, "0", "0", {}, "None", {}]
-if __name__ == '__main__':
-    app.run_server(debug=True)
+    # 4. Return the 11 items required by the callback
+    return ["0", "0", "0", fig, "None", go.Figure(), "0", "0", go.Figure(), "System Nominal", go.Figure()]
