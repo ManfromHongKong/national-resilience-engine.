@@ -69,9 +69,42 @@ app.layout = dbc.Container([
      Input("switch-academic", "value"),
      Input("switch-defense", "value")]
 )
+@app.callback(
+    [Output("infra-metric-kaohsiung", "children"),
+     Output("infra-metric-lng", "children"),
+     Output("infra-metric-water", "children"),
+     Output("infra-simulation-graph", "figure"),
+     Output("c2-matrix-table-container", "children"),
+     Output("c2-simulation-graph", "figure"),
+     Output("semi-metric-value", "children"),
+     Output("semi-metric-mirror", "children"),
+     Output("semi-simulation-graph", "figure"),
+     Output("asymmetric-threat-alert-box", "children"),
+     Output("spark-simulation-graph", "figure")],
+    [Input("core-module-tabs", "value"),
+     Input("escalation-slider", "value"),
+     Input("temporal-slider", "value"),
+     Input("switch-emp", "value"),
+     Input("switch-ubo", "value"),
+     Input("switch-academic", "value"),
+     Input("switch-defense", "value")]
+)
 def update_all_metrics(tab, esc, temp, emp, ubo, acad, defn):
-    # Logic goes here
-    return ["0", "0", "0", {}, "None", {}, "0", "0", {}, "None", {}]
-
+    # 1. Create the graph figure
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=[0, 1, 2, 3], 
+        y=[10, 10 - esc, 5, 5 - (esc * 0.5)], 
+        mode='lines+markers',
+        line=dict(color='cyan')
+    ))
+    fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white')
+    )
+    
+    # 2. Return the list (The 4th item is now the 'fig' we created)
+    return ["0", "0", "0", fig, "None", {}, "0", "0", {}, "None", {}]
 if __name__ == '__main__':
     app.run_server(debug=True)
