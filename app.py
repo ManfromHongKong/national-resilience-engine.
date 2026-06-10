@@ -118,4 +118,8 @@ def update_all_metrics(tab, esc, temp, emp, ubo, acad, defn):
     )
     
     # 4. Return the 11 items required by the callback
-    return ["0", "0", "0", fig, "None", go.Figure(), "0", "0", go.Figure(), "System Nominal", go.Figure()]
+   # 4. Return the 11 items required by the callback
+    # Using a dictionary for empty figures is much more stable for Render
+    empty_fig = {"data": [], "layout": {"paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)"}}
+    
+    return ["0", "0", "0", fig, "None", empty_fig, "0", "0", empty_fig, "System Nominal", empty_fig]
