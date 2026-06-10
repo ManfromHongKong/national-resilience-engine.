@@ -37,11 +37,24 @@ app.layout = dbc.Container([
     ], id="premium-licensing-modal", is_open=False)
 ], fluid=True, style={"backgroundColor": "#0f1219", "minHeight": "100vh"})
     
-    # Calculate dampener modifiers based on active policy switches
+# Calculate dampener modifiers based on active policy switches
+def calculate_multipliers(temporal_stage, active_switches):
+    switch_efficiency = 0.15
     emp_boost = switch_efficiency if "emp" in active_switches else 0.0
     ubo_delay = True if "ubo" in active_switches else False
     academic_shield = True if "academic" in active_switches else False
     defense_boost = 0.15 if "defense" in active_switches else 0.0
+
+    # Timeline era multiplier
+    temporal_decay_multiplier = 1.0 if temporal_stage == 0 else 1.5
+
+    return (
+        emp_boost,
+        ubo_delay,
+        academic_shield,
+        defense_boost,
+        temporal_decay_multiplier
+    )
     
     # Base acceleration factor (shifter for decay curves depending on the timeline era)
     temporal_decay_multiplier = 1.0 if temporal_stage == 0 else 1.5
