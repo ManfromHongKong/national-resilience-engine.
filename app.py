@@ -1,9 +1,10 @@
-import streamlit as st
-import plotly.graph_objects as go
+import dash
+from dash import dcc, html, Input, Output
+import dash_bootstrap_components as dbc
+from plotly import graph_objects as go
 
-# --- Setup ---
-st.set_page_config(layout="wide")
-st.title("National Resilience Engine")
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
+server = app.server
 
 # --- Functions ---
 def calculate_multipliers(temporal_stage, active_switches):
@@ -15,30 +16,72 @@ def calculate_multipliers(temporal_stage, active_switches):
     temporal_decay_multiplier = 1.0 if temporal_stage == 0 else 1.5
     return emp_boost, ubo_delay, academic_shield, defense_boost, temporal_decay_multiplier
 
-# --- Sidebar Controls ---
-st.sidebar.header("Policy Settings")
-escalation = st.sidebar.slider("Escalation Level", 0, 10, 5)
-temporal = st.sidebar.slider("Temporal Stage", 0, 1, 0)
-emp = st.sidebar.checkbox("EMP Switch")
-ubo = st.sidebar.checkbox("UBO Switch")
-academic = st.sidebar.checkbox("Academic Switch")
-defense = st.sidebar.checkbox("Defense Switch")
+# --- Master Layout ---
+app.layout = dbc.Container([
+    html.H1("National Resilience Engine", className="text-white my-4"),
+    dcc.Tabs(id="core-module-tabs", value='tab-1', children=[
+        dcc.Tab(label='Simulation Engine', value='tab-1'),
+        dcc.Tab(label='Policy Settings', value='tab-2'),
+    ]),
+    html.Div(id='tabs-content-example', className="mt-4"),
 
-# --- Logic ---
-active_switches = []
-if emp: active_switches.append("emp")
-if ubo: active_switches.append("ubo")
-if academic: active_switches.append("academic")
-if defense: active_switches.append("defense")
+    # Hidden components
+    html.Div(id="infra-metric-kaohsiung", className="d-none"),
+    html.Div(id="infra-metric-lng", className="d-none"),
+    html.Div(id="infra-metric-water", className="d-none"),
+    dcc.Graph(id="infra-simulation-graph", className="d-none"),
+    html.Div(id="c2-matrix-table-container", className="d-none"),
+    dcc.Graph(id="c2-simulation-graph", className="d-none"),
+    html.Div(id="semi-metric-value", className="d-none"),
+    html.Div(id="semi-metric-mirror", className="d-none"),
+    dcc.Graph(id="semi-simulation-graph", className="d-none"),
+    html.Div(id="asymmetric-threat-alert-box", className="d-none"),
+    dcc.Graph(id="spark-simulation-graph", className="d-none"),
 
-emp_b, _, _, _, temp_m = calculate_multipliers(temporal, active_switches)
+    # Input Controls
+    dcc.Slider(id="escalation-slider", min=0, max=10, value=5),
+    dcc.Slider(id="temporal-slider", min=0, max=1, value=0),
+    dcc.Checklist(id="switch-emp", options=[{'label': 'EMP', 'value': 'emp'}], value=[]),
+    dcc.Checklist(id="switch-ubo", options=[{'label': 'UBO', 'value': 'ubo'}], value=[]),
+    dcc.Checklist(id="switch-academic", options=[{'label': 'Academic', 'value': 'academic'}], value=[]),
+    dcc.Checklist(id="switch-defense", options=[{'label': 'Defense', 'value': 'defense'}], value=[]),
+], fluid=True)
 
-# --- Visualization ---
-tab1, tab2 = st.tabs(["Simulation Engine", "Policy Settings"])
-
-with tab1:
-    y_values = [10 * (1 + emp_b), (10 - escalation) * temp_m, 5, 5 - (escalation * 0.5)]
+# --- Central Callback ---
+@app.callback(
+    [Output("infra-metric-kaohsiung", "children"),
+     Output("infra-metric-lng", "children"),
+     Output("infra-metric-water", "children"),
+     Output("infra-simulation-graph", "figure"),
+     Output("c2-matrix-table-container", "children"),
+     Output("c2-simulation-graph", "figure"),
+     Output("semi-metric-value", "children"),
+     Output("semi-metric-mirror", "children"),
+     Output("semi-simulation-graph", "figure"),
+     Output("asymmetric-threat-alert-box", "children"),
+     Output("spark-simulation-graph", "figure")],
+    [Input("core-module-tabs", "value"),
+     Input("escalation-slider", "value"),
+     Input("temporal-slider", "value"),
+     Input("switch-emp", "value"),
+     Input("switch-ubo", "value"),
+     Input("switch-academic", "value"),
+     Input("switch-defense", "value")]
+)
+def update_all_metrics(tab, esc, temp, emp, ubo, acad, defn):
+    active_switches = []
+    if emp: active_switches.append("emp")
+    if ubo: active_switches.append("ubo")
+    if acad: active_switches.append("academic")
+    if defn: active_switches.append("defense")
+    
+    emp_b, ubo_d, acad_s, def_b, temp_m = calculate_multipliers(temp, active_switches)
+    
     fig = go.Figure()
+    y_values = [10 * (1 + emp_b), (10 - esc) * temp_m, 5, 5 - (esc * 0.5)]
+    
     fig.add_trace(go.Scatter(x=[0, 1, 2, 3], y=y_values, mode='lines+markers', line=dict(color='cyan')))
     fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='white'))
-    st.plotly_chart(fig)
+    
+    empty_fig = {"data": [], "layout": {"paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)"}}
+    return ["0", "0", "0", fig, "None", empty_fig, "0", "0", empty_fig, "System Nominal", empty_fig]
